@@ -25,6 +25,20 @@ define KernelPackage/qca-nss-phy
   AUTOLOAD:=$(call AutoLoad,08,qca-nss-phy)
 endef
 
+define KernelPackage/qca-mdio
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Devices
+  TITLE:=QCA MDIO driver
+  FILES:=$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko \
+	 $(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko
+  AUTOLOAD:=$(call AutoLoad,01,mdio-ipq4019 mdio-gpio)
+endef
+
+define KernelPackage/qca-mdio/description
+ QCOM MDIO driver and MDIO GPIO driver
+endef
+
 define KernelPackage/qca-nss-phy/Description
 This package contains drivers for QCA PHYs such as Manhattan PHY and NAPA PHY.
 It also contains vendor specific extensions for QCA PHYs which are not supported
@@ -131,8 +145,11 @@ define Build/InstallDev
 endef
 
 define KernelPackage/qca-nss-phy/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/qca-nss-phy.init $(1)/etc/init.d/qca-nss-phy
 endef
 
+$(eval $(call KernelPackage,qca-mdio))
 $(eval $(call KernelPackage,qca8k-cc))
 $(eval $(call KernelPackage,qca8084))
 $(eval $(call KernelPackage,qca81xx))
