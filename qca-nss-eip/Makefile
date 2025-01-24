@@ -82,7 +82,7 @@ define KernelPackage/qca-nss-eip-ipsec
   DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx \
 	  	+kmod-qca-nss-eip \
 		kmod-qca-nss-ecm \
-		+kmod-qca-nss-ppe-vp
+		+kmod-qca-nss-ppe-vp +kmod-qca-nss-netfn-pkt-steer
   TITLE:=Kernel IPsec client for NSS EIP driver
   FILES:=$(PKG_BUILD_DIR)/clients/ipsec/qca-nss-eip-ipsec.ko
 endef
@@ -106,6 +106,7 @@ EXTRA_CFLAGS+= -I$(STAGING_DIR)/usr/include/qca-nss-ppe
 ifneq ($(CONFIG_PACKAGE_kmod-qca-nss-eip-ipsec),)
 EXTRA_CFLAGS+= -I$(PKG_BUILD_DIR)/clients/exports
 EXTRA_CFLAGS+= -I$(STAGING_DIR)/usr/include/qca-nss-ecm
+EXTRA_CFLAGS+= -I$(STAGING_DIR)/usr/include/qca-nss-netfn
 MAKE_OPTS+=eip_ipsec=m
 endif
 
