@@ -75,6 +75,19 @@ define KernelPackage/qca8xxx-phc/Description
 Linux PHC driver of QCA8XXX PHY
 endef
 
+define KernelPackage/qca8k-cc
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Devices
+  TITLE:=QCA8K clock controller driver
+  FILES:=$(PKG_BUILD_DIR)/linux_std/clock/qca8k-cc.ko
+  AUTOLOAD:=$(call AutoLoad, 06, qca8k-cc)
+endef
+
+define KernelPackage/qca8k-cc/Description
+Clock driver for QCA8386 and QCA8084 devices.
+endef
+
 ifdef CONFIG_TARGET_NAME
 QCA_NSS_PHY_CONFIG_OPTS+= \
 	TARGET_NAME=$(CONFIG_TARGET_NAME)
@@ -112,11 +125,13 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/qca-nss-phy
 	$(CP) -rf $(PKG_BUILD_DIR)/nss_ext/*h $(STAGING_DIR)/usr/include/qca-nss-phy
+	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/clock/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 endef
 
 define KernelPackage/qca-nss-phy/install
 endef
 
+$(eval $(call KernelPackage,qca8k-cc))
 $(eval $(call KernelPackage,qca8084))
 $(eval $(call KernelPackage,qca81xx))
 $(eval $(call KernelPackage,qca8xxx-phc))
