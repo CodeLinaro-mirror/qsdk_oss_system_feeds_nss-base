@@ -53,6 +53,7 @@ define KernelPackage/qca8084
   SUBMENU:=Network Devices
   TITLE:=QCA8084 PHY driver
   FILES:=$(PKG_BUILD_DIR)/linux_std/qca8084/qca8084-phy.ko
+  DEPENDS:=+kmod-qca8k-cc
   PROVIDES:=qca8084
   AUTOLOAD:=$(call AutoLoad,07,qca8084-phy)
 endef
@@ -126,6 +127,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/qca-nss-phy
 	$(CP) -rf $(PKG_BUILD_DIR)/nss_ext/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/clock/*h $(STAGING_DIR)/usr/include/qca-nss-phy
+	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 endef
 
 define KernelPackage/qca-nss-phy/install
