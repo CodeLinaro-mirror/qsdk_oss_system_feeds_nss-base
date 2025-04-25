@@ -78,8 +78,22 @@ define KernelPackage/qca8084
   AUTOLOAD:=$(call AutoLoad,07,qca8084-phy)
 endef
 
-define KernelPackage/qca8084/Description
-This package contains qca8084 Linux PHY driver
+define KernelPackage/qca1204/Description
+This package contains qca1204 Linux PHY driver
+endef
+
+define KernelPackage/qce1204
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Devices
+  TITLE:=QCE1204 PHY driver
+  FILES:=$(PKG_BUILD_DIR)/linux_std/qce1204/qce1204-phy.ko
+  PROVIDES:=qce1204
+  AUTOLOAD:=$(call AutoLoad,07,qce1204-phy)
+endef
+
+define KernelPackage/qce1204/Description
+This package contains qce1204 Linux PHY driver
 endef
 
 define KernelPackage/qca8xxx-phc
@@ -158,6 +172,7 @@ endef
 $(eval $(call KernelPackage,qca-mdio))
 $(eval $(call KernelPackage,qca8k-cc))
 $(eval $(call KernelPackage,qca8084))
+$(eval $(call KernelPackage,qce1204))
 $(eval $(call KernelPackage,qca81xx))
 $(eval $(call KernelPackage,qca8xxx-phc))
 $(eval $(call KernelPackage,qca-nss-phy))
