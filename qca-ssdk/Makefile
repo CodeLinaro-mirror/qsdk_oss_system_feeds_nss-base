@@ -43,34 +43,12 @@ endef
 
 define KernelPackage/qca-ssdk-nohnat
 $(call KernelPackage/qca-ssdk/default-nohnat)
-  DEPENDS:=@!(TARGET_ipq_ipq40xx||TARGET_ipq40xx)||TARGET_ar71xx \
-	+kmod-qca-nss-phy +kmod-qca8k-cc +kmod-qca8084
+  DEPENDS:= +kmod-qca-nss-phy +kmod-qca8k-cc +kmod-qca8084
   VARIANT:=nohnat
-
-  ifneq (, $(findstring $(hal_arch), "ipq50xx"))
-    ifeq (, $(CONFIG_LOWMEM_FLASH))
-      ifneq ($(LINUX_VERSION),$(filter 5.4%,$(LINUX_VERSION)))
-      DEPENDS+=kmod-ipt-filter +kmod-ppp
-      QCASSDK_CONFIG_OPTS+= HNAT_FEATURE=enable
-      endif
-    endif
-  endif
 endef
 
 define KernelPackage/qca-ssdk-nohnat/Description
 This package contains a qca-ssdk driver for QCA chipset
-endef
-
-define KernelPackage/qca-ssdk-hnat
-$(call KernelPackage/qca-ssdk/default-nohnat)
-  DEPENDS:=@TARGET_ipq_ipq40xx||TARGET_ipq40xx||TARGET_ar71xx||TARGET_ipq806x +kmod-ipt-extra \
-	  +kmod-ipt-filter +(TARGET_ipq806x||TARGET_ipq):kmod-qca-rfs +kmod-ppp
-  TITLE+= (hnat)
-  VARIANT:=hnat
-endef
-
-define KernelPackage/qca-ssdk-hnat/Description
-This package contains a qca-ssdk-hnat driver for QCA chipset
 endef
 
 GCC_VERSION=$(shell echo "$(CONFIG_GCC_VERSION)" | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
@@ -102,21 +80,12 @@ QCASSDK_CONFIG_OPTS+= TOOL_PATH=$(TOOLCHAIN_BIN_PATH) \
 		SoC=$(hal_arch) \
 		CFLAGS=-I$(STAGING_DIR)/usr/include
 
-ifeq ($(LOCAL_VARIANT),hnat)
-    QCASSDK_CONFIG_OPTS+= HNAT_FEATURE=enable
-    ifeq ($(CONFIG_TARGET_ar71xx),)
-    	QCASSDK_CONFIG_OPTS+= RFS_FEATURE=enable
-    endif
-endif
-
-ifneq (, $(findstring $(hal_arch), "ipq95xx"))
+ifneq (, $(findstring $(hal_arch), "ipq52xx"))
+	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=HMSPPE
+else ifneq (, $(findstring $(hal_arch), "ipq96xx"))
+	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=JHPPE
+else ifneq (, $(findstring $(hal_arch), "ipq95xx"))
 	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=APPE
-else ifneq (, $(findstring $(hal_arch), "ipq807x"))
-	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=HPPE
-else ifneq (, $(findstring $(hal_arch), "ipq60xx"))
-	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=CPPE
-else ifneq (, $(findstring $(hal_arch), "ipq50xx"))
-	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=MP
 else ifneq (, $(findstring $(hal_arch), "ipq53xx"))
 	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=MPPE
 else ifneq (, $(findstring $(hal_arch), "ipq54xx"))
@@ -155,15 +124,7 @@ define Build/InstallDev
 
 endef
 
-LNX_CONFIG_OPTS :=
-
-ifneq (, $(findstring $(hal_arch), "ipq807x" "ipq60xx" "ipq95xx" "ipq53xx"))
-LNX_CONFIG_OPTS += LNX_MAKEOPTS='$(KERNEL_MAKEOPTS)' MODULE_TYPE=KSLIB modules
-else ifeq ($(LINUX_VERSION), $(filter 6.1%, $(LINUX_VERSION)))
-LNX_CONFIG_OPTS += LNX_MAKEOPTS='$(KERNEL_MAKEOPTS)' MODULE_TYPE=KSLIB modules
-else ifeq ($(LINUX_VERSION), $(filter 6.6%, $(LINUX_VERSION)))
-LNX_CONFIG_OPTS += LNX_MAKEOPTS='$(KERNEL_MAKEOPTS)' MODULE_TYPE=KSLIB modules
-endif
+LNX_CONFIG_OPTS = LNX_MAKEOPTS='$(KERNEL_MAKEOPTS)' MODULE_TYPE=KSLIB modules
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/mk $(strip $(QCASSDK_CONFIG_OPTS)) $(LNX_CONFIG_OPTS)
@@ -174,10 +135,4 @@ define KernelPackage/qca-ssdk-nohnat/install
 	$(INSTALL_BIN) ./files/qca-ssdk $(1)/etc/init.d/qca-ssdk
 endef
 
-define KernelPackage/qca-ssdk-hnat/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/qca-ssdk $(1)/etc/init.d/qca-ssdk
-endef
-
 $(eval $(call KernelPackage,qca-ssdk-nohnat))
-$(eval $(call KernelPackage,qca-ssdk-hnat))
