@@ -121,7 +121,7 @@ endif
 
 SUPPORTED_PHYS = CONFIG_NSSPHY_QCA808X CONFIG_NSSPHY_QCA81XX CONFIG_NSSPHY_QCA803X
 
-ifneq (, $(findstring $(CONFIG_TARGET_BOARD), "ipq95xx"))
+ifneq (, $(findstring $(CONFIG_TARGET_BOARD), "ipq95xx" "ipq52xx" "ipq96xx"))
     SUPPORTED_PHYS+=CONFIG_NSSPHY_QCA807X
 endif
 
