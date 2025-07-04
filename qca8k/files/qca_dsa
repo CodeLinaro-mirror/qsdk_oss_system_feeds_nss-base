@@ -44,25 +44,50 @@ delete_dsa_vlan_interfaces() {
 	done
 }
 
+remove_dsa_interfaces_from_bridge() {
+	interfaces=$(bridge link | grep -E 'lan[0-9]' | grep -v 'wlan' | awk -F': ' '{print $2}' | cut -d'@' -f1)
+
+	for iface in $interfaces; do
+		ip link set "$iface" nomaster
+	done
+}
+
 handle_proto() {
+	if [ ! -d /sys/module/qca8k ]; then
+		echo "need to start dsa firstly."
+		return 1
+	fi
+
 	proto_value=$(echo $cmd | cut -d'=' -f2)
 	mdev=`ip link show  | grep lan1@ | awk -F'[@:]' '{print $3}'`
+	tagging_file="/sys/class/net/${mdev}/dsa/tagging"
+
+	current_tagging=$(cat "$tagging_file")
+	if [ "$proto_value" = "$current_tagging" ]; then
+		echo "proto is not changed, skipping."
+		return 1
+	fi
+
 	ifconfig "$mdev" down
 
-	# Changing proto via sysfs won't unregister the interfaces, delete all DSA VLAN
-	# interfaces if any to avoid VLAN as VP configuration residue in PPE driver.
+	# Changing proto via sysfs won't unregister the interfaces,
+	#  delete all DSA VLAN interfaces if any to avoid VLAN as VP configuration residue in PPE driver,
+	#  remove all DSA interfaces from bridge to avoid legacy configuration residue with bridge.
 	# ALL configuration need to cover manually/network script after DSA commands.
 	delete_dsa_vlan_interfaces
+	remove_dsa_interfaces_from_bridge
 
 	if [ "$proto_value" = "qca_8021q" ]; then
-		echo qca_8021q >> /sys/class/net/"$mdev"/dsa/tagging
+		echo qca_8021q >> "$tagging_file"
 	elif [ "$proto_value" = "qca_4b" ]; then
-		echo qca_4b >> /sys/class/net/"$mdev"/dsa/tagging
+		echo qca_4b >> "$tagging_file"
 	else
 		echo "not support"
 	fi
 
 	ifconfig "$mdev" up
+
+	return 0
 }
 
 load_qca8k() {
@@ -155,9 +180,9 @@ then
 	then
 		echo "change tag proto is not support on ipq95xx."
 	else
-		qca_dsa_stop
-		qca_dsa_start
 		handle_proto
-		turn_off_masterdev_cksm_offloading
+		if [ $? -eq 0 ]; then
+			turn_off_masterdev_cksm_offloading
+		fi
 	fi
 fi
