@@ -30,9 +30,15 @@ define KernelPackage/qca-mdio
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=QCA MDIO driver
-  FILES:=$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko \
-	 $(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko
-  AUTOLOAD:=$(call AutoLoad,01,mdio-ipq4019 mdio-gpio)
+  KCONFIG:= \
+	CONFIG_MDIO_BITBANG \
+	CONFIG_MDIO_GPIO \
+	CONFIG_MDIO_IPQ4019
+  FILES:= \
+	$(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko \
+	$(LINUX_DIR)/drivers/net/mdio/mdio-bitbang.ko \
+	$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko
+  AUTOLOAD:=$(call AutoLoad,01,mdio-ipq4019 mdio-bitbang mdio-gpio)
 endef
 
 define KernelPackage/qca-mdio/description
