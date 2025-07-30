@@ -95,6 +95,7 @@ define KernelPackage/qca-nss-dp/install
 	$(INSTALL_BIN) ./files/edma_dump $(1)/usr/bin/edma_dump
 	$(INSTALL_BIN) ./files/edma_recover.sh $(1)/usr/bin/
 	$(INSTALL_BIN) ./files/edma_hang_inj.sh $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/nss_cfg.ini $(1)/etc/config/
 endef
 endif
 
