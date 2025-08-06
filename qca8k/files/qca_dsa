@@ -109,7 +109,8 @@ unload_qca8k() {
 
 turn_off_masterdev_cksm_offloading() {
 	mdev=`ip link show  | grep lan1@ | awk -F'[@:]' '{print $3}'`
-	if grep -q "qca_4b" /sys/class/net/"$mdev"/dsa/tagging
+	if grep -q "qca_4b" /sys/class/net/"$mdev"/dsa/tagging\
+	   || [ "$(cat /sys/module/qca_nss_dp/parameters/nss_dp_mht_multi_txring)" -eq 1 ]
 	then
 		ethtool -K "$mdev" tx off
 	fi
@@ -117,7 +118,8 @@ turn_off_masterdev_cksm_offloading() {
 
 turn_on_masterdev_cksm_offloading() {
 	mdev=`ip link show  | grep lan1@ | awk -F'[@:]' '{print $3}'`
-	if grep -q "qca_4b" /sys/class/net/"$mdev"/dsa/tagging
+	if grep -q "qca_4b" /sys/class/net/"$mdev"/dsa/tagging \
+	   || [ "$(cat /sys/module/qca_nss_dp/parameters/nss_dp_mht_multi_txring)" -eq 1 ]
 	then
 		ethtool -K "$mdev" tx on
 	fi
