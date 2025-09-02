@@ -55,10 +55,11 @@ EIP_BASE_HEX=$(printf "%08x" \
 
 EIP_BASE=0x$EIP_BASE_HEX
 
-
 MAX_DESC_MASK=255
 EIP_NUMBER=0
 RING_COUNT=0
+EIP_196=196
+EIP_197=197
 
 get_first_set_bit_lsb() {
 	bitmask=$1
@@ -251,18 +252,103 @@ dump_res_desc() {
 	done
 }
 
+get_ctx_name() {
+	case "$1" in
+		"ahash")      echo "eip_ahash_ctx" ;;
+		"aead")       echo "eip_aead_ctx" ;;
+		"dtls")       echo "eip_dtls_ctx" ;;
+		"ipsec")      echo "eip_ipsec_ctx" ;;
+		"ipsec_hy")   echo "eip_hy_ipsec_ctx" ;;
+		"skcipher")   echo "eip_skcipher_ctx" ;;
+		*)            return 1 ;;
+	esac
+}
+
+get_tr_size() {
+	if [ "$EIP_NUMBER" -eq "$EIP_197" ] && [ $(($1 & 3)) -eq 3 ]; then
+		echo $((320 - 0x10))
+	elif [ "$EIP_NUMBER" -eq "$EIP_197" ] && [ $(($1 & 3)) -eq 2 ]; then
+		echo $((256 - 0x10))
+	elif [ "$EIP_NUMBER" -eq "$EIP_196" ] && [ $(($1 & 3)) -eq 3 ]; then
+		echo $((256 - 0x10))
+	elif [ "$EIP_NUMBER" -eq "$EIP_196" ] && [ $(($1 & 3)) -eq 2 ]; then
+		echo $((192 - 0x10))
+	else
+		echo "Unable to determine tr size"
+	fi
+}
+
+dump_tr() {
+	ctx_name=$(get_ctx_name "$1")
+	dir=$(find "/sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER" -maxdepth 1 -type f -name "${ctx_name}*" | head -n 1)
+	if [ -z $dir ]; then
+		echo "No context entry found for $1"
+		exit 1
+	fi
+
+	# 4th field is the tr address, remove the parentheses to get the address value.
+	tr_addr=$(find "$dir" -type f -print -exec cat {} \; | grep "Transform" | cut -d " " -f 4 | tr -d "()" | sed -n "$2p")
+	if [ -z "$tr_addr" ]; then
+		echo "No TR address found for: $1"
+		exit 1
+	fi
+
+	# tr_addr can have multiple entries, traverse it one by one
+	# Determine the large/small transform record size for printing
+	for addr in $tr_addr
+	do
+		addr=$((0x$addr))
+		printf 'Transform record addr for %s: 0x%x\n' "$1" "$addr"
+		tr_size=$(get_tr_size $addr)
+		addr=$(($addr & ~3))
+
+		words=0
+		while [ $words -le $tr_size ]
+		do
+			echo "`devmem $(($addr + $words))` `devmem $(($addr + $words + 4))` `devmem $(($addr + $words + 8))` `devmem $(($addr + $words + 0xC))`"
+			words=$(($words + 0x10))
+		done
+		echo ""
+	done
+}
+
+dump_eip_hw() {
+	start_addr=$EIP_BASE
+	size=0x$(hexdump -s 4 -n 4 -e '4/1 "%02x"' /proc/device-tree/soc@0/eip*/reg)
+
+	echo "Starting EIP$EIP_NUMBER HW dump"
+	echo "It may take sometime to finish, start logging terminal output in a file"
+	echo "Stop any running traffic or keep the device in issue state for accurate register content"
+	echo "Press any key to continue..."
+	read -n 1 -s
+
+	for i in $(seq 0 $(($size / 4)))
+	do
+		addr=$(($start_addr + i * 4))
+		val=$(devmem $addr)
+		printf '0x%x:\t0x%x\n' $addr $val
+	done
+}
+
 dump_stats() {
-	irq_affinity_num=$(grep -E -m1 'eip_ring_0' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
-	[ -n "$irq_affinity_num" ] && echo -n "eip_ring_0 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
-	irq_affinity_num=$(grep -E -m1 'eip_ring_1' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
-	[ -n "$irq_affinity_num" ] && echo -n "eip_ring_1 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
-	irq_affinity_num=$(grep -E -m1 'eip_ring_2' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
-	[ -n "$irq_affinity_num" ] && echo -n "eip_ring_2 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
-	irq_affinity_num=$(grep -E -m1 'eip_ring_3' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
-	[ -n "$irq_affinity_num" ] && echo -n "eip_ring_3 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
+	irq_affinity_num=$(grep -E -m1 'eip_irq_ring_0' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
+	[ -n "$irq_affinity_num" ] && echo -n "eip_irq_ring_0 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
+	irq_affinity_num=$(grep -E -m1 'eip_irq_ring_1' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
+	[ -n "$irq_affinity_num" ] && echo -n "eip_irq_ring_1 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
+	irq_affinity_num=$(grep -E -m1 'eip_irq_ring_2' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
+	[ -n "$irq_affinity_num" ] && echo -n "eip_irq_ring_2 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
+	irq_affinity_num=$(grep -E -m1 'eip_irq_ring_3' /proc/interrupts | cut -d ':' -f 1 | tail -n1 | tr -d ' ')
+	[ -n "$irq_affinity_num" ] && echo -n "eip_irq_ring_3 affinity- " && cat /proc/irq/$irq_affinity_num/smp_affinity
 
 	echo "cat /proc/interrupts |grep eip"
 	cat /proc/interrupts |grep eip
+	find /sys/module/qca_nss_eip/parameters/ -type f -print -exec cat {} \;
+
+	#Dump ipsec client module param if its loaded
+	if [ -d /sys/module/qca_nss_eip_ipsec ]; then
+		find /sys/module/qca_nss_eip_ipsec/parameters/ -type f -print -exec cat {} \;
+	fi
+
 	find /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/ -type f -print -exec cat {} \;
 }
 
@@ -286,10 +372,14 @@ dump_ipsec() {
 			ifconfig ${iface##*/}
 		fi
 	done
+
+	ip xfrm state
+	ip xfrm policy
+
 	echo "Total Tunnel: `ls -d /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/ipsectun* | wc -l`"
 	find /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/$id -type f -print -exec cat {} \;
 
-	if [ $EIP_NUMBER -eq 197 ]; then
+	if [ $EIP_NUMBER -eq $EIP_197 ]; then
 		find /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/eip_hy_ipsec_ctx* -type f -print -exec cat {} \;
 	else
 		find /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/eip_ipsec_ctx* -type f -print -exec cat {} \;
@@ -334,6 +424,9 @@ usage_msg () {
 	echo "	desc [ring] [count] : Dumps recent command & result descriptor equal to count"
 	echo "	cmd [ring] [count] : Dumps recent command descriptor equal to count"
 	echo "	flows: Dumps flow table (EIP197 only)"
+	echo "	dump_tr [name] : Dumps transform record for given service name"
+	echo "	Supported name for dump_tr: aead/ahash/dtls/ipsec/ipsec_hy/skcipher"
+	echo "	hw_dump : Dumps all EIP HW register, avoid using it until its necessary!"
 	echo "	sh -x <script> : Run script in trace mode (optional)"
 	echo ""
 }
@@ -361,6 +454,10 @@ case "${1:-all}" in
 		load_version
 		dump_cmd_desc ${2:-0} ${3:-1}
 		;;
+	"dump_tr")
+		load_version
+		dump_tr ${2:-0}
+		;;
 	"ipsec")
 		load_version
 		dump_ipsec "ipsectun*"
@@ -372,6 +469,10 @@ case "${1:-all}" in
 	"flows")
 		load_version
 		dump_flows
+		;;
+	"hw_dump")
+		load_version
+		dump_eip_hw
 		;;
 	*)
 		usage_msg
