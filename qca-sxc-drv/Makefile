@@ -4,7 +4,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=qca-sxc-drv
 PKG_SOURCE_PROTO:=git
 PKG_RELEASE:=1
-LOCAL_SRC:=$(TOPDIR)/qca/src/nss/base/qca-sxc-drv
+LOCAL_SRC:=$(TOPDIR)/qca/src/nss/base/qca-sxc-drv/
 
 include $(INCLUDE_DIR)/local-development.mk
 ifeq ($(DUMP)$(PKG_VERSION),)
@@ -66,6 +66,11 @@ endif
 ifneq ($(CONFIG_PACKAGE_kmod-qca-sac-drv),)
 MAKE_OPTS+=qca-sac-drv=y
 endif
+
+define KernelPackage/qca-sdc-drv/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/qca-sxc-drv.init $(1)/etc/init.d/qca-sxc-drv
+endef
 
 define Build/Compile
 	$(KERNEL_MAKE) $(strip $(MAKE_OPTS)) \
