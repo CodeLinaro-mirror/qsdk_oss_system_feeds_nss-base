@@ -14,7 +14,7 @@ start() {
 
 	insmod qca-sdc-drv
 	sleep 1
-	sxc &
+	sdc &
 
 	#
 	# TODO: Make the interface configurable.
@@ -29,7 +29,7 @@ stop() {
 	fi
 
 	echo "del br-lan" > /sys/kernel/debug/sdc/tracked_ifaces
-	killall sxc
+	killall sdc
 	sleep 1
 	rmmod qca-sdc-drv
 }
