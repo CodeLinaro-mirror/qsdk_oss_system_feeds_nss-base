@@ -25,13 +25,38 @@ qca_nss_dp_dependency() {
 }
 
 enable_rps() {
+
+	# Detect platform to determine core count
+	# Default to 4 cores (threshold 8), use 5 cores (threshold 16) for IPQ96XX
+	local core_threshold=8
+
+	# Check device tree model for IPQ96XX
+	if [ -f /proc/device-tree/model ]; then
+		model=$(cat /proc/device-tree/model 2>/dev/null)
+		case "$model" in
+			*IPQ96*|*ipq96*)
+				core_threshold=16
+				;;
+		esac
+	fi
+
+	# Alternative: Check board name if device tree not available
+	if [ $core_threshold -eq 8 ] && [ -f /tmp/sysinfo/board_name ]; then
+		board=$(cat /tmp/sysinfo/board_name 2>/dev/null)
+		case "$board" in
+			*ipq96*|*IPQ96*)
+				core_threshold=16
+				;;
+		esac
+	fi
+
 	i=1
 	irq_rps=`grep edma_rxdesc /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
 	for entry in $irq_rps
 	do
 		echo $i > /proc/irq/$entry/smp_affinity
 		i=$(expr $i \* 2)
-		if [ $i -gt 8 ];then
+		if [ $i -gt $core_threshold ];then
 			i=1
 		fi
 	done
@@ -42,7 +67,7 @@ enable_rps() {
         do
                 echo $i > /proc/irq/$entry/smp_affinity
                 i=$(expr $i \* 2)
-                if [ $i -gt 8 ];then
+                if [ $i -gt $core_threshold ];then
                         i=1
                 fi
         done
@@ -53,7 +78,7 @@ enable_rps() {
 	do
 		echo $i > /proc/irq/$entry/smp_affinity
 		i=$(expr $i \* 2)
-		if [ $i -gt 8 ];then
+		if [ $i -gt $core_threshold ];then
 			i=1
 		fi
 	done
