@@ -59,11 +59,11 @@ else ifeq ($(CONFIG_KERNEL_IPQ_MEM_PROFILE),512)
 EXTRA_CFLAGS+= -DNSS_DP_MEM_PROFILE_MEDIUM
 endif
 
-ifeq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt), y)
+ifeq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt)$(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEntOpen), y)
 EXTRA_CFLAGS+= -DNSS_DP_POINT_OFFLOAD
 endif
 
-ifeq ($(CONFIG_TARGET_ipq53xx_generic_QSDK_MinEnt), y)
+ifeq ($(CONFIG_TARGET_ipq53xx_generic_QSDK_MinEnt)$(CONFIG_TARGET_ipq53xx_generic_QSDK_MinEntOpen), y)
 EXTRA_CFLAGS+= -DNSS_DP_VP_RINGS
 endif
 
@@ -75,7 +75,7 @@ ifneq ($(CONFIG_TARGET_ipq95xx)$(CONFIG_TARGET_ipq53xx)$(CONFIG_TARGET_ipq54xx),
 EXTRA_CFLAGS+= -DNSS_DP_NETSTANDBY
 MAKE_OPTS+=dp-net-standby=y
 MAKE_OPTS+=dp-ppe-ds=y
-ifneq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt), y)
+ifneq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt)$(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEntOpen), y)
 MAKE_OPTS+=dp-loopback=y
 endif
 endif
