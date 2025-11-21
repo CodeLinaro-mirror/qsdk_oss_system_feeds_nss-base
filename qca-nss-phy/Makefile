@@ -51,20 +51,20 @@ It also contains vendor specific extensions for QCA PHYs which are not supported
 by upstream drivers.
 endef
 
-define KernelPackage/qca81xx
+define KernelPackage/qcom-lnx-phy
   SECTION:=kernel
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=QCA81XX PHY driver
-  FILES:=$(PKG_BUILD_DIR)/linux_std/qca81xx/qca81xx-phy.ko
+  FILES:=$(PKG_BUILD_DIR)/linux_std/qcom-lnx-phy.ko
   DEPENDS:=+kmod-hwmon-core
-  PROVIDES:=qca81xx
-  AUTOLOAD:=$(call AutoLoad,07,qca81xx-phy)
+  PROVIDES:=qcom-lnx-phy
+  AUTOLOAD:=$(call AutoLoad,07,qcom-lnx-phy)
 endef
 
-define KernelPackage/qca81xx/Description
-This package contains qca81xx linux phy driver, it will be upstream PHY driver
-of LAGUNA PHY.
+define KernelPackage/qcom-lnx-phy/Description
+This package contains qca81xx, qce1204 linux phy driver, it will be upstream PHY driver
+of QCA8111 PHY, QCE1204 PHY.
 endef
 
 define KernelPackage/qca8084
@@ -78,22 +78,8 @@ define KernelPackage/qca8084
   AUTOLOAD:=$(call AutoLoad,07,qca8084-phy)
 endef
 
-define KernelPackage/qca1204/Description
-This package contains qca1204 Linux PHY driver
-endef
-
-define KernelPackage/qce1204
-  SECTION:=kernel
-  CATEGORY:=Kernel modules
-  SUBMENU:=Network Devices
-  TITLE:=QCE1204 PHY driver
-  FILES:=$(PKG_BUILD_DIR)/linux_std/qce1204/qce1204-phy.ko
-  PROVIDES:=qce1204
-  AUTOLOAD:=$(call AutoLoad,07,qce1204-phy)
-endef
-
-define KernelPackage/qce1204/Description
-This package contains qce1204 Linux PHY driver
+define KernelPackage/qca8084/Description
+This package contains qca8084 Linux PHY driver
 endef
 
 define KernelPackage/qca8xxx-phc
@@ -101,7 +87,7 @@ define KernelPackage/qca8xxx-phc
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=QCA8xxx PHC driver
-  DEPENDS:=+kmod-qca81xx
+  DEPENDS:=+kmod-qcom-lnx-phy
   FILES:=$(PKG_BUILD_DIR)/linux_std/ptp/qca8xxx-phc.ko
   AUTOLOAD:=$(call AutoLoad, 31, qca8xxx-phc)
 endef
@@ -173,7 +159,6 @@ endef
 $(eval $(call KernelPackage,qca-mdio))
 $(eval $(call KernelPackage,qca8k-cc))
 $(eval $(call KernelPackage,qca8084))
-$(eval $(call KernelPackage,qce1204))
-$(eval $(call KernelPackage,qca81xx))
+$(eval $(call KernelPackage,qcom-lnx-phy))
 $(eval $(call KernelPackage,qca8xxx-phc))
 $(eval $(call KernelPackage,qca-nss-phy))
