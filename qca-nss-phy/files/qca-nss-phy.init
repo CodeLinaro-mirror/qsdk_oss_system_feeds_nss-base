@@ -14,6 +14,7 @@ load() {
 	[ -f /lib/modules/$kver/qcom-lnx-phy.ko ] && insmod qcom-lnx-phy.ko
 	[ -f /lib/modules/$kver/qca8xxx-phc.ko ] && insmod qca8xxx-phc.ko
 	[ -f /lib/modules/$kver/qca-nss-phy.ko ] && insmod qca-nss-phy.ko
+	[ -f /lib/modules/$kver/qcom-lnx-phy-macsec.ko ] && insmod qcom-lnx-phy-macsec.ko
 }
 
 case "$1" in

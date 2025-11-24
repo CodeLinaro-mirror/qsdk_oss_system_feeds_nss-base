@@ -109,6 +109,22 @@ define KernelPackage/qca8k-cc/Description
 Clock driver for QCA8386 and QCA8084 devices.
 endef
 
+define KernelPackage/qcom-lnx-phy-macsec
+  SECTION:=kernel
+  CATEGORY:=Kernel modules
+  SUBMENU:=Network Devices
+  TITLE:=Linux MACsec offloading to PHY driver
+  FILES:=$(PKG_BUILD_DIR)/linux_std/macsec/qcom-lnx-phy-macsec.ko
+  DEPENDS:=+kmod-macsec
+  KCONFIG:=CONFIG_MACSEC
+  AUTOLOAD:=$(call AutoLoad, 33, qcom-lnx-phy-macsec)
+endef
+
+define KernelPackage/qcom-lnx-phy-macsec/Description
+This package includes the QCOM Linux MACsec driver, which will
+become the upstream driver for MACsec offloading to PHY in Linux kernel.
+endef
+
 ifdef CONFIG_TARGET_NAME
 QCA_NSS_PHY_CONFIG_OPTS+= \
 	TARGET_NAME=$(CONFIG_TARGET_NAME)
@@ -162,3 +178,4 @@ $(eval $(call KernelPackage,qca8084))
 $(eval $(call KernelPackage,qcom-lnx-phy))
 $(eval $(call KernelPackage,qca8xxx-phc))
 $(eval $(call KernelPackage,qca-nss-phy))
+$(eval $(call KernelPackage,qcom-lnx-phy-macsec))
