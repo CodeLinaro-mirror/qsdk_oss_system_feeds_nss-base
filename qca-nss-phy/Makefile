@@ -22,6 +22,7 @@ define KernelPackage/qca-nss-phy
   TITLE:=QCA-NSS-PHY driver
   FILES:=$(PKG_BUILD_DIR)/nss_ext/qca-nss-phy.ko
   PROVIDES:=qca-nss-phy
+  DEPENDS:=+kmod-qca-mdio
   AUTOLOAD:=$(call AutoLoad,08,qca-nss-phy)
 endef
 
@@ -33,12 +34,17 @@ define KernelPackage/qca-mdio
   KCONFIG:= \
 	CONFIG_MDIO_BITBANG \
 	CONFIG_MDIO_GPIO \
-	CONFIG_MDIO_IPQ4019
+	CONFIG_MDIO_IPQ4019 \
+	CONFIG_MDIO_I2C
   FILES:= \
-	$(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko \
-	$(LINUX_DIR)/drivers/net/mdio/mdio-bitbang.ko \
-	$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko
-  AUTOLOAD:=$(call AutoLoad,01,mdio-ipq4019 mdio-bitbang mdio-gpio)
+	$(if $(filter m, $(CONFIG_MDIO_GPIO)),$(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko) \
+	$(if $(filter m, $(CONFIG_MDIO_BITBANG)),$(LINUX_DIR)/drivers/net/mdio/mdio-bitbang.ko) \
+	$(if $(filter m, $(CONFIG_MDIO_IPQ4019)),$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko) \
+	$(if $(filter m, $(CONFIG_MDIO_I2C)),$(LINUX_DIR)/drivers/net/mdio/mdio-i2c.ko)
+  AUTOLOAD:=$(call AutoLoad,01,$(if $(filter m, $(CONFIG_MDIO_IPQ4019)),mdio-ipq4019) \
+	$(if $(filter m, $(CONFIG_MDIO_BITBANG)),mdio-bitbang) \
+	$(if $(filter m, $(CONFIG_MDIO_GPIO)),mdio-gpio) \
+	$(if $(filter m, $(CONFIG_MDIO_I2C)),mdio-i2c))
 endef
 
 define KernelPackage/qca-mdio/description
