@@ -20,10 +20,13 @@ define KernelPackage/qca-nss-phy
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=QCA-NSS-PHY driver
-  FILES:=$(PKG_BUILD_DIR)/nss_ext/qca-nss-phy.ko
+  FILES:=$(PKG_BUILD_DIR)/nss_ext/qca-nss-phy.ko \
+	    $(if $(filter m, $(CONFIG_SFP)),$(LINUX_DIR)/drivers/net/phy/sfp.ko)
+
   PROVIDES:=qca-nss-phy
   DEPENDS:=+kmod-qca-mdio
-  AUTOLOAD:=$(call AutoLoad,08,qca-nss-phy)
+  AUTOLOAD:=$(call AutoLoad,08,qca-nss-phy \
+	    $(if $(filter m, $(CONFIG_SFP)),sfp))
 endef
 
 define KernelPackage/qca-mdio
