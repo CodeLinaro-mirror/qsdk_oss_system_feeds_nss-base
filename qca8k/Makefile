@@ -32,6 +32,21 @@ define KernelPackage/qca8k/description
 Kernel driver for QCA DSA
 endef
 
+define KernelPackage/qce2k
+  SUBMENU:=$(NETWORK_DEVICES_MENU)
+  TITLE:=Kernel driver for QCE2204 DSA
+  DEPENDS:=@(TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx) +kmod-qca-nss-dp
+  KCONFIG:=CONFIG_NET_DSA_QCE2204 CONFIG_PCS_QCE2204
+  FILES:= \
+	$(LINUX_DIR)/drivers/net/pcs/pcs-qce2204.ko \
+	$(LINUX_DIR)/drivers/net/dsa/qca/qce2204_dsa.ko
+  AUTOLOAD:=$(call AutoLoad,31,pcs-qce2204) \
+	$(call AutoLoad,32,qce2204_dsa)
+endef
+define KernelPackage/qce2k/description
+Kernel driver for QCE DSA
+endef
+
 define Build/Compile
 	#$(MAKE) -C $(PKG_BUILD_DIR) $(strip $(QCASSDK_CONFIG_OPTS)) $(LNX_CONFIG_OPTS)
 endef
@@ -42,3 +57,5 @@ define KernelPackage/qca8k/install
 endef
 
 $(eval $(call KernelPackage,qca8k))
+$(eval $(call KernelPackage,qce2k))
+
