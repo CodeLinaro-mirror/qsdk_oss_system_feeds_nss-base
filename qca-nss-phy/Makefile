@@ -43,11 +43,13 @@ define KernelPackage/qca-mdio
 	$(if $(filter m, $(CONFIG_MDIO_GPIO)),$(LINUX_DIR)/drivers/net/mdio/mdio-gpio.ko) \
 	$(if $(filter m, $(CONFIG_MDIO_BITBANG)),$(LINUX_DIR)/drivers/net/mdio/mdio-bitbang.ko) \
 	$(if $(filter m, $(CONFIG_MDIO_IPQ4019)),$(LINUX_DIR)/drivers/net/mdio/mdio-ipq4019.ko) \
-	$(if $(filter m, $(CONFIG_MDIO_I2C)),$(LINUX_DIR)/drivers/net/mdio/mdio-i2c.ko)
+	$(if $(filter m, $(CONFIG_MDIO_I2C)),$(LINUX_DIR)/drivers/net/mdio/mdio-i2c.ko) \
+	$(PKG_BUILD_DIR)/linux_std/mdio_ahb/mdio-ahb.ko
   AUTOLOAD:=$(call AutoLoad,01,$(if $(filter m, $(CONFIG_MDIO_IPQ4019)),mdio-ipq4019) \
 	$(if $(filter m, $(CONFIG_MDIO_BITBANG)),mdio-bitbang) \
 	$(if $(filter m, $(CONFIG_MDIO_GPIO)),mdio-gpio) \
-	$(if $(filter m, $(CONFIG_MDIO_I2C)),mdio-i2c))
+	$(if $(filter m, $(CONFIG_MDIO_I2C)),mdio-i2c) \
+	mdio-ahb)
 endef
 
 define KernelPackage/qca-mdio/description
@@ -157,6 +159,10 @@ ifneq (, $(findstring $(CONFIG_TARGET_BOARD), "ipq95xx" "ipq52xx" "ipq96xx"))
     SUPPORTED_PHYS+=CONFIG_NSSPHY_QCA807X
 endif
 
+ifneq (, $(findstring $(CONFIG_TARGET_BOARD), "ipq52xx"))
+    SUPPORTED_PHYS+=CONFIG_NSSPHY_IPQ52XX
+endif
+
 QCA_NSS_PHY_CONFIG_OPTS+= supported_phys="$(SUPPORTED_PHYS)"
 
 define Build/Prepare
@@ -174,6 +180,7 @@ define Build/InstallDev
 	$(CP) -rf $(PKG_BUILD_DIR)/nss_ext/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/clock/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/*h $(STAGING_DIR)/usr/include/qca-nss-phy
+	$(CP) -rf $(PKG_BUILD_DIR)/linux_std/mdio_ahb/*h $(STAGING_DIR)/usr/include/qca-nss-phy
 endef
 
 define KernelPackage/qca-nss-phy/install

@@ -10,6 +10,7 @@ load() {
 	[ -f /lib/modules/$kver/mdio-bitbang.ko ] && insmod mdio-bitbang.ko
 	[ -f /lib/modules/$kver/mdio-gpio.ko ] && insmod mdio-gpio.ko
 	[ -f /lib/modules/$kver/mdio-i2c.ko ] && insmod mdio-i2c.ko
+	[ -f /lib/modules/$kver/mdio-ahb.ko ] && insmod mdio-ahb.ko
 	[ -f /lib/modules/$kver/qca8k-cc.ko ] && insmod qca8k-cc.ko
 	[ -f /lib/modules/$kver/qca8084-phy.ko ] && insmod qca8084-phy.ko
 	[ -f /lib/modules/$kver/qcom-lnx-phy.ko ] && insmod qcom-lnx-phy.ko
