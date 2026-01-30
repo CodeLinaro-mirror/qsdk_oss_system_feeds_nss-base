@@ -31,7 +31,7 @@ define KernelPackage/qca-nss-ppe
   SUBMENU:=Network Devices
   TITLE:=Kernel driver for PPE (core driver)
   DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx\
-		+kmod-qca-ssdk-nohnat \
+		+kmod-qca-ssdk-nohnat +kmod-qca-nss-debug\
 		+!(TARGET_ipq53xx_ipq53xx_32_QSDK_256||TARGET_ipq54xx_ipq54xx_32_QSDK_256):kmod-nat46
   FILES:=$(PKG_BUILD_DIR)/drv/ppe_drv/qca-nss-ppe.ko
   AUTOLOAD:=$(call AutoLoad,31,qca-nss-ppe)
@@ -63,6 +63,7 @@ EXTRA_CFLAGS+= \
 	-I$(STAGING_DIR)/usr/include/qca-ssdk/fal \
 	-I$(STAGING_DIR)/usr/include/qca-ssdk/init \
 	-I$(STAGING_DIR)/usr/include/nat46 \
+	-I$(STAGING_DIR)/usr/include/qca-nss-debug \
 
 MAKE_OPTS+=ppe-drv=y
 
