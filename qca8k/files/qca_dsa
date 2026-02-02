@@ -31,6 +31,20 @@ esac
 
 # Detect DSA driver type
 detect_dsa_driver() {
+	# Check device tree compatible property
+	compatible=$(cat /proc/device-tree/soc@0/*/switch0@*/compatible 2>/dev/null)
+
+	if [ -n "$compatible" ]; then
+		if echo "$compatible" | grep -q "qce2204"; then
+			echo "qce2204_dsa"
+			return
+		elif echo "$compatible" | grep -q "qca83"; then
+			echo "qca8k"
+			return
+		fi
+	fi
+
+	# Fallback to module detection if DTS check fails
 	if [ -d /sys/module/qca8k ]; then
 		echo "qca8k"
 	elif [ -d /sys/module/qce2204_dsa ]; then
@@ -233,7 +247,7 @@ qca_dsa_stop() {
 
 if [[ $cmd = "start" ]]
 then
-	local driver_type=$(detect_dsa_driver)
+	driver_type=$(detect_dsa_driver)
 	if [ "$driver_type" = "qce2204_dsa" ]; then
 		echo "start command is not supported for qce2204_dsa driver."
 	else
@@ -244,7 +258,7 @@ fi
 
 if [[ $cmd = "stop" ]]
 then
-	local driver_type=$(detect_dsa_driver)
+	driver_type=$(detect_dsa_driver)
 	if [ "$driver_type" = "qce2204_dsa" ]; then
 		echo "stop command is not supported for qce2204_dsa driver."
 	else
