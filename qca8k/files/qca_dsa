@@ -17,17 +17,9 @@
 
 cmd=$1
 parastr=$2
-ppe_switch_port=1
 
-board_name=$(grep -o "ipq53\|ipq54\|ipq95" /tmp/sysinfo/board_name)
-case $board_name in
-	ipq53|ipq95)
-		ppe_switch_port=1
-		;;
-	ipq54)
-		ppe_switch_port=3
-		;;
-esac
+ppe_switch_port=$(echo "$(cat /sys/kernel/debug/qca-nss-dp/mht_tx_fcgrp)" | \
+	grep -oE 'macid:[0-9]+' | awk -F: '{print $2}' | tr '\n' ' ')
 
 # Detect DSA driver type
 detect_dsa_driver() {
@@ -59,6 +51,39 @@ get_numbers() {
 	numbers=$(echo "$input" | grep -oE '[0-9]+:[0-9]+' | awk -F: '{print $2}' | tr '\n' ',')
 	numbers=${numbers%,}
 	echo "$numbers"
+}
+
+get_tagging_file() {
+	# Get master device
+	local mdev=$(ip link show | grep 'lan1@' | awk -F'[@:]' '{print $3}')
+	if [ -z "$mdev" ]; then
+		mdev=$(ip link show | grep 'lan0@' | awk -F'[@:]' '{print $3}')
+	fi
+
+	if [ -z "$mdev" ]; then
+		echo "Error: No DSA master device found." >&2
+		return 1
+	fi
+
+	local tagging_file="/sys/class/net/${mdev}/dsa/tagging"
+	if [ ! -f "$tagging_file" ]; then
+		echo "Error: Tagging file not found: $tagging_file" >&2
+		return 1
+	fi
+
+	echo "$tagging_file"
+	return 0
+}
+
+get_current_tagging() {
+	local tagging_file=$(get_tagging_file 2>&1)
+	if [ $? -ne 0 ]; then
+		echo "$tagging_file" >&2
+		return 1
+	fi
+
+	cat "$tagging_file"
+	return 0
 }
 
 delete_dsa_vlan_interfaces() {
@@ -109,29 +134,22 @@ handle_proto() {
 		return 1
 	fi
 
-	mdev=`ip link show  | grep lan1@ | awk -F'[@:]' '{print $3}'`
-
-	if [ -z "$mdev" ]; then
-		mdev=`ip link show  | grep lan0@ | awk -F'[@:]' '{print $3}'`
-	fi
-
-	if [ -z "$mdev" ]; then
-		echo "No DSA master device found."
+	# Get tagging file path
+	tagging_file=$(get_tagging_file)
+	if [ $? -ne 0 ] || [ -z "$tagging_file" ]; then
+		echo "Failed to get tagging file."
 		return 1
 	fi
 
-	tagging_file="/sys/class/net/${mdev}/dsa/tagging"
-
-	if [ ! -f "$tagging_file" ]; then
-		echo "Tagging file not found: $tagging_file"
-		return 1
-	fi
-
+	# Get current tagging
 	current_tagging=$(cat "$tagging_file")
 	if [ "$proto_value" = "$current_tagging" ]; then
 		echo "proto is not changed, skipping."
 		return 1
 	fi
+
+	# Get master device from tagging file path
+	mdev=$(echo "$tagging_file" | awk -F'/' '{print $5}')
 
 	bring_down_dsa_interfaces
 	ifconfig "$mdev" down
@@ -218,9 +236,10 @@ turn_off_hw_ath_adding() {
 }
 
 turn_on_hw_ath_adding() {
+	local ath_type=$1
 	if [ "$(cat /sys/module/qca_nss_dp/parameters/nss_dp_mht_multi_txring)" -eq 1 ]; then
 		echo 0 >> /sys/ssdk/dev_id
-		ssdk_sh athtag tx set $ppe_switch_port y 0xaaaa v3 normal n n
+		ssdk_sh athtag tx set $ppe_switch_port y $ath_type v3 normal n n
 	fi
 }
 
@@ -237,6 +256,43 @@ turn_on_ssdk_polling() {
 	echo 0 >> /sys/ssdk/dev_id
 }
 
+handle_qce2204_holb_config() {
+	if [ "$(cat /sys/module/qca_nss_dp/parameters/nss_dp_mht_multi_txring)" -ne 1 ]; then
+		return 0
+	fi
+
+	local driver_type=$(detect_dsa_driver)
+	if [ "$driver_type" != "qce2204_dsa" ]; then
+		return 0
+	fi
+
+	# Get current tagging
+	local proto_value=$(get_current_tagging)
+	if [ $? -ne 0 ]; then
+		echo "Failed to get current tagging."
+		return 1
+	fi
+
+	bring_down_dsa_interfaces
+
+	if [ "$parastr" = "htt_holb" ]; then
+		if [ "$proto_value" = "qca_8021q" ] || [ "$proto_value" = "qca_4b" ]; then
+			numbers=$(get_numbers)
+			echo "$numbers" > /sys/module/qce2204_dsa/parameters/qce2204_fcgroup
+			turn_off_hw_ath_adding
+		elif [ "$proto_value" = "none" ]; then
+			echo "0xff,0xff,0xff,0xff,0xff" > /sys/module/qce2204_dsa/parameters/qce2204_fcgroup
+			turn_on_hw_ath_adding 0xfefe
+		fi
+	else
+		echo "Error: missing htt_holb when the HOLB is enabled"
+	fi
+
+	bring_up_dsa_interfaces
+
+	return 0
+}
+
 qca_dsa_start() {
 	turn_off_ssdk_polling
 	turn_off_hw_ath_adding
@@ -245,7 +301,7 @@ qca_dsa_start() {
 
 qca_dsa_stop() {
 	unload_qca8k
-	turn_on_hw_ath_adding
+	turn_on_hw_ath_adding 0xaaaa
 	turn_on_ssdk_polling
 }
 
@@ -253,7 +309,7 @@ if [[ $cmd = "start" ]]
 then
 	driver_type=$(detect_dsa_driver)
 	if [ "$driver_type" = "qce2204_dsa" ]; then
-		echo "start command is not supported for qce2204_dsa driver."
+		handle_qce2204_holb_config
 	else
 		qca_dsa_start
 		turn_off_masterdev_cksm_offloading
@@ -279,6 +335,7 @@ then
 	else
 		handle_proto
 		if [ $? -eq 0 ]; then
+			handle_qce2204_holb_config
 			turn_off_masterdev_cksm_offloading
 		fi
 	fi
