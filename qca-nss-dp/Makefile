@@ -81,6 +81,10 @@ MAKE_OPTS+=dp-loopback=y
 endif
 endif
 
+ifneq ($(CONFIG_TARGET_ipq96xx)$(CONFIG_TARGET_ipq52xx),)
+MAKE_OPTS+=dp-ddrq=y
+endif
+
 NSS_DP_HAL_DIR:=$(PKG_BUILD_DIR)/hal
 ifneq (, $(findstring _64, $(subtarget)))
 hal_arch:=$(subst _64,,$(subtarget))
