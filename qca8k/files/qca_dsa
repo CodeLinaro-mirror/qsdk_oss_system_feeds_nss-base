@@ -157,7 +157,11 @@ handle_proto() {
 	ifconfig "$mdev" up
 	bring_up_dsa_interfaces
 
-	# Handle post-protocol change actions
+	# For qca8k driver, return for dsa interfaces are not in network config by default
+	if [ "$driver_type" = "qca8k" ]; then
+		return 0
+	fi
+
 	if [ "$proto_value" = "qca_8021q" ] || [ "$proto_value" = "qca_4b" ]; then
 		# For qca_8021q and qca_4b, restart network
 		echo "Restarting network for protocol $proto_value..."
