@@ -86,6 +86,13 @@ ifeq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt), y)
 EXTRA_CFLAGS+= -DPPE_V4_BAD_LEN_EXCEP_DIS
 endif
 
+# Enable PPE ESP SPI Passthrough support when kernel config is enabled
+ifneq ($(CONFIG_TARGET_ipq96xx)$(CONFIG_TARGET_ipq52xx),)
+ifneq ($(CONFIG_NF_CT_PROTO_ESP),)
+MAKE_OPTS+=PPE_DRV_ESP_SPI_PASSTH_ENABLE=y
+endif
+endif
+
 define Build/Compile
 	$(KERNEL_MAKE) $(strip $(MAKE_OPTS)) \
 		M="$(PKG_BUILD_DIR)" \
