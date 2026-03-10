@@ -125,10 +125,10 @@ define KernelPackage/qcom-lnx-phy-macsec
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=Linux MACsec offloading to PHY driver
-  FILES:=$(PKG_BUILD_DIR)/linux_std/macsec/qcom-lnx-phy-macsec.ko
+  FILES:=$(if $(filter y m,$(CONFIG_MACSEC)),$(PKG_BUILD_DIR)/linux_std/macsec/qcom-lnx-phy-macsec.ko)
   DEPENDS:=+kmod-macsec
   KCONFIG:=CONFIG_MACSEC
-  AUTOLOAD:=$(call AutoLoad, 33, qcom-lnx-phy-macsec)
+  AUTOLOAD:=$(if $(filter y m,$(CONFIG_MACSEC)),$(call AutoLoad,33,qcom-lnx-phy-macsec))
 endef
 
 define KernelPackage/qcom-lnx-phy-macsec/Description
