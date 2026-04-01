@@ -83,7 +83,7 @@ define KernelPackage/qca-nss-eip-ipsec
   SECTION:=kernel
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
-  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq52xx \
+  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq52xx||TARGET_ipq96xx \
 	  	+kmod-qca-nss-eip \
 		kmod-qca-nss-ecm \
 		+kmod-qca-nss-ppe-vp +kmod-qca-nss-netfn-pkt-steer
