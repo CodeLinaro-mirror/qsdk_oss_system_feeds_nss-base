@@ -257,6 +257,10 @@ turn_on_ssdk_polling() {
 }
 
 handle_qce2204_holb_config() {
+	if ! grep -qE "ipq5[34]" /tmp/sysinfo/board_name 2>/dev/null; then
+		return 0
+	fi
+
 	if [ "$(cat /sys/module/qca_nss_dp/parameters/nss_dp_mht_multi_txring)" -ne 1 ]; then
 		return 0
 	fi
