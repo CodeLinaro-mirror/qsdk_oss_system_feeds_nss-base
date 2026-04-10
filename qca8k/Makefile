@@ -35,13 +35,13 @@ endef
 define KernelPackage/qce2k
   SUBMENU:=$(NETWORK_DEVICES_MENU)
   TITLE:=Kernel driver for QCE2204 DSA
-  DEPENDS:=@(TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx) +kmod-qca-nss-dp
+  DEPENDS:=@(TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx)
   KCONFIG:=CONFIG_NET_DSA_QCE2204 CONFIG_PCS_QCE2204
   FILES:= \
 	$(LINUX_DIR)/drivers/net/pcs/pcs-qce2204.ko \
 	$(LINUX_DIR)/drivers/net/dsa/qca/qce2204_dsa.ko
-  AUTOLOAD:=$(call AutoLoad,31,pcs-qce2204) \
-	$(call AutoLoad,32,qce2204_dsa)
+  AUTOLOAD:=$(call AutoLoad,28,pcs-qce2204) \
+	$(call AutoLoad,29,qce2204_dsa)
 endef
 define KernelPackage/qce2k/description
 Kernel driver for QCE DSA
