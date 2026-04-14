@@ -26,16 +26,24 @@ qca_nss_dp_dependency() {
 
 enable_rps() {
 
-	# Detect platform to determine core count
-	# Default to 4 cores (threshold 8), use 5 cores (threshold 16) for IPQ96XX
+	# Detect platform to determine core count and RPS core usage
+	# Default to 4 cores (threshold 8) and 3 RPS cores, use 5 RPS cores
+	# (threshold 16) for IPQ96XX
 	local core_threshold=8
+	local num_cores=3
 
-	# Check device tree model for IPQ96XX
+	local arch=$(uname -m 2>/dev/null)
+
+	# Check device tree model for IPQ96XX. Use 5 RPS cores only on 64-bit
+	# profile (aarch64); keep default core settings for 32-bit profile.
 	if [ -f /proc/device-tree/model ]; then
 		model=$(cat /proc/device-tree/model 2>/dev/null)
 		case "$model" in
 			*IPQ96*|*ipq96*)
-				core_threshold=16
+				if [ "$arch" = "aarch64" ]; then
+					core_threshold=16
+					num_cores=5
+				fi
 				;;
 		esac
 	fi
@@ -45,7 +53,10 @@ enable_rps() {
 		board=$(cat /tmp/sysinfo/board_name 2>/dev/null)
 		case "$board" in
 			*ipq96*|*IPQ96*)
-				core_threshold=16
+				if [ "$arch" = "aarch64" ]; then
+					core_threshold=16
+					num_cores=5
+				fi
 				;;
 		esac
 	fi
@@ -54,7 +65,7 @@ enable_rps() {
 	irq_rps=`grep edma_rxdesc /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
 	for entry in $irq_rps
 	do
-		echo $i > /proc/irq/$entry/smp_affinity
+		printf "%x\n" "$i" > /proc/irq/$entry/smp_affinity
 		i=$(expr $i \* 2)
 		if [ $i -gt $core_threshold ];then
 			i=1
@@ -65,7 +76,7 @@ enable_rps() {
         irq_rps=`grep edma_rxfill /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
         for entry in $irq_rps
         do
-                echo $i > /proc/irq/$entry/smp_affinity
+                printf "%x\n" "$i" > /proc/irq/$entry/smp_affinity
                 i=$(expr $i \* 2)
                 if [ $i -gt $core_threshold ];then
                         i=1
@@ -76,15 +87,15 @@ enable_rps() {
 	irq_rps=`grep edma_txcmpl /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
 	for entry in $irq_rps
 	do
-		echo $i > /proc/irq/$entry/smp_affinity
+		printf "%x\n" "$i" > /proc/irq/$entry/smp_affinity
 		i=$(expr $i \* 2)
 		if [ $i -gt $core_threshold ];then
 			i=1
 		fi
 	done
 
-	#Enable RPS to use only 3 cores by default
-	echo 3 > /proc/sys/net/edma/rps_num_cores
+	# Enable RPS core count based on platform
+	echo $num_cores > /proc/sys/net/edma/rps_num_cores
 }
 
 start() {
