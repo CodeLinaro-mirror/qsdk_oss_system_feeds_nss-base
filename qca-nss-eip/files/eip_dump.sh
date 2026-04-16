@@ -25,7 +25,37 @@
 #
 # with no parameters, eip_dump.sh will print all debug information.
 
-EIP_BASE=$((0x39880000))
+
+DT_BASE="/proc/device-tree/soc@0/eip*"
+
+# Read reg base (DT order)
+EIP_REG_BASE_HEX=$(hexdump -n 4 -e '4/1 "%02x"' \
+  $DT_BASE/reg)
+
+# Default offset = 0
+EIP_REG_OFFSET_HEX=00000000
+
+# Some boards use reg-offset
+if [ -f $DT_BASE/reg-offset ]; then
+    EIP_REG_OFFSET_HEX=$(hexdump -n 4 -e '4/1 "%02x"' \
+      $DT_BASE/reg-offset)
+
+# Some boards use reg_offset
+elif [ -f $DT_BASE/reg_offset ]; then
+    EIP_REG_OFFSET_HEX=$(hexdump -n 4 -e '4/1 "%02x"' \
+      $DT_BASE/reg_offset)
+fi
+
+# Version register address = base + 0xFFFFC (before offset)
+EIP_VERSION_ADDR=0x$(printf "%08x" $((0x$EIP_REG_BASE_HEX + 0xFFFFC)))
+
+# Final HW base = base + optional offset
+EIP_BASE_HEX=$(printf "%08x" \
+  $((0x$EIP_REG_BASE_HEX + 0x$EIP_REG_OFFSET_HEX)))
+
+EIP_BASE=0x$EIP_BASE_HEX
+
+
 MAX_DESC_MASK=255
 EIP_NUMBER=0
 RING_COUNT=0
@@ -57,7 +87,7 @@ print_reg () {
 }
 
 load_version() {
-	EIP_NUMBER=$((($(devmem 0x398FFFFC) & 0xFF) >> 0))
+	EIP_NUMBER=$(( $(devmem "$EIP_VERSION_ADDR") & 0xFF ))
 	if [ $EIP_NUMBER -eq 197 ]; then
 		RING_COUNT=8
 	else
@@ -66,8 +96,12 @@ load_version() {
 }
 
 print_version() {
-	echo "EIP Number : $EIP_NUMBER"
-	echo "Major version : 3.$((($(devmem 0x398FFFFC) & 0xF000000) >> 24))"
+	local VERSION_REG
+
+	VERSION_REG=$(devmem "$EIP_VERSION_ADDR")
+
+	echo "EIP Number 	: $(( VERSION_REG & 0xFF ))"
+	echo "EIP version 	: $(( (VERSION_REG & 0x0F000000) >> 24 )).$(( (VERSION_REG & 0xF00000) >> 20 ))"
 }
 
 dump_hia_reg () {
@@ -238,6 +272,15 @@ dump_ipsec() {
 	fi
 }
 
+dump_flows() {
+	if [ $EIP_NUMBER -ne 197 ]; then
+		echo "Flow table dump is only supported on EIP197"
+		return
+	fi
+	echo "====Flow Table Dump:===="
+	find /sys/kernel/debug/qca-nss-eip/eip$EIP_NUMBER/eip_flow_table -type f -print -exec cat {} \;
+}
+
 #Invoke default dump function
 dump_all() {
 	dump_reg
@@ -253,6 +296,7 @@ dump_all() {
 
 	dump_stats
 	dump_ipsec "ipsectun*"
+	dump_flows
 }
 
 usage_msg () {
@@ -265,6 +309,7 @@ usage_msg () {
 	echo "	stats: Dumps all statistics"
 	echo "	desc [ring] [count] : Dumps recent command & result descriptor equal to count"
 	echo "	cmd [ring] [count] : Dumps recent command descriptor equal to count"
+	echo "	flows: Dumps flow table (EIP197 only)"
 	echo "	sh -x <script> : Run script in trace mode (optional)"
 	echo ""
 }
@@ -299,6 +344,10 @@ case "${1:-all}" in
 	ipsec*)
 		load_version
 		dump_ipsec $1
+		;;
+	"flows")
+		load_version
+		dump_flows
 		;;
 	*)
 		usage_msg
