@@ -72,10 +72,10 @@ ifneq ($(CONFIG_DEFAULT_kmod-netstandby-eawtp-drv),)
 MAKE_OPTS+=CONFIG_QCA_NSS_DP_EAWTP=y
 endif
 
-ifneq ($(CONFIG_TARGET_ipq95xx)$(CONFIG_TARGET_ipq53xx)$(CONFIG_TARGET_ipq54xx),)
+ifneq ($(CONFIG_TARGET_ipq95xx)$(CONFIG_TARGET_ipq53xx)$(CONFIG_TARGET_ipq54xx)$(CONFIG_TARGET_ipq52xx)$(CONFIG_TARGET_ipq96xx),)
 EXTRA_CFLAGS+= -DNSS_DP_NETSTANDBY
 MAKE_OPTS+=dp-net-standby=y
-ifneq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt)$(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEntOpen), y)
+ifneq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt)$(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEntOpen)$(CONFIG_TARGET_ipq52xx)$(CONFIG_TARGET_ipq96xx), y)
 MAKE_OPTS+=dp-loopback=y
 endif
 endif
