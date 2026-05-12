@@ -42,7 +42,6 @@ enable_rps() {
 			*IPQ96*|*ipq96*)
 				if [ "$arch" = "aarch64" ]; then
 					core_threshold=16
-					num_cores=5
 				fi
 				;;
 		esac
@@ -55,7 +54,6 @@ enable_rps() {
 			*ipq96*|*IPQ96*)
 				if [ "$arch" = "aarch64" ]; then
 					core_threshold=16
-					num_cores=5
 				fi
 				;;
 		esac
