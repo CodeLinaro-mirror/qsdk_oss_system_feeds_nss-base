@@ -83,6 +83,7 @@ endif
 MAKE_OPTS+=dp-ppe-ds=y
 ifneq ($(CONFIG_TARGET_ipq96xx)$(CONFIG_TARGET_ipq52xx),)
 MAKE_OPTS+=dp-ddrq=y
+MAKE_OPTS+=dp-udp-st=y
 endif
 
 NSS_DP_HAL_DIR:=$(PKG_BUILD_DIR)/hal
