@@ -82,6 +82,10 @@ MAKE_OPTS+=PPE_TUN_ENABLE=y
 endif
 endif
 
+ifeq ($(CONFIG_TARGET_ipq52xx_ipq52xx_32_QSDK_Sfu), y)
+MAKE_OPTS+=PPE_TUN_ENABLE=y
+endif
+
 ifeq ($(CONFIG_TARGET_ipq95xx_generic_QSDK_MinEnt), y)
 EXTRA_CFLAGS+= -DPPE_V4_BAD_LEN_EXCEP_DIS
 endif
