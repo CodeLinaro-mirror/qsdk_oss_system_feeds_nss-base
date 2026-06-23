@@ -14,7 +14,7 @@ define KernelPackage/$(PKG_NAME)
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
   TITLE:= UIO driver for MMAP Telemetry
-  DEPENDS:= @TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx
+  DEPENDS:= @TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx
   FILES:=$(PKG_BUILD_DIR)/mmap-telemetry.ko
   AUTOLOAD:=$(call AutoLoad,08,mmap-telemetry)
 endef

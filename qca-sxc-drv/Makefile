@@ -27,7 +27,7 @@ define KernelPackage/qca-sdc-drv
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=Kernel driver for smart device classification
-  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx +kmod-qca-mmap-telemetry
+  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx +kmod-qca-mmap-telemetry
   FILES:=$(PKG_BUILD_DIR)/sdc/qca-sdc-drv.ko
 endef
 
@@ -45,7 +45,7 @@ define KernelPackage/qca-sac-drv
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   TITLE:=Kernel driver for smart application classification
-  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx +kmod-qca-mmap-telemetry
+  DEPENDS:=@TARGET_ipq95xx||TARGET_ipq53xx||TARGET_ipq54xx||TARGET_ipq96xx||TARGET_ipq52xx +kmod-qca-mmap-telemetry
   FILES:=$(PKG_BUILD_DIR)/sac/qca-sac-drv.ko
 endef
 
