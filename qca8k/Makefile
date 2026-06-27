@@ -51,11 +51,20 @@ define Build/Compile
 	#$(MAKE) -C $(PKG_BUILD_DIR) $(strip $(QCASSDK_CONFIG_OPTS)) $(LNX_CONFIG_OPTS)
 endef
 
-define KernelPackage/qca8k/install
+define Install/qca_dsa
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/qca_dsa $(1)/usr/bin/
 endef
 
+define KernelPackage/qca8k/install
+	$(call Install/qca_dsa,$(1))
+endef
+
+ifeq ($(filter y m,$(CONFIG_PACKAGE_kmod-qca8k)),)
+define KernelPackage/qce2k/install
+	$(call Install/qca_dsa,$(1))
+endef
+endif
+
 $(eval $(call KernelPackage,qca8k))
 $(eval $(call KernelPackage,qce2k))
-
