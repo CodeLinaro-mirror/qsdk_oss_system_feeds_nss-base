@@ -86,6 +86,10 @@ MAKE_OPTS+=dp-ddrq=y
 MAKE_OPTS+=dp-udp-st=y
 endif
 
+ifeq ($(CONFIG_TARGET_ipq52xx_ipq52xx_32_QSDK_Sfu), y)
+MAKE_OPTS+=dp-sfu=y
+endif
+
 NSS_DP_HAL_DIR:=$(PKG_BUILD_DIR)/hal
 ifneq (, $(findstring _64, $(subtarget)))
 hal_arch:=$(subst _64,,$(subtarget))
