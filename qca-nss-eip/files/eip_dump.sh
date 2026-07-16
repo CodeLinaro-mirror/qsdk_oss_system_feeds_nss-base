@@ -138,6 +138,14 @@ dump_pe_reg() {
 dump_dma_reg() {
 	ring_id=$1
 	ring_base=$((0x1000 * $ring_id))
+
+	# Check if ring is configured; CDR base address register is 0x0 for unconfigured rings
+	cdr_base_val=$(($(devmem $(($EIP_BASE + $ring_base + 0x0)))))
+	if [ $cdr_base_val -eq 0 ]; then
+		echo "====DMA ID: $ring_id is not configured, skipping===="
+		return
+	fi
+
 	echo "====DMA ID: $ring_id Register dump:===="
 	print_reg "cmd_ring_addr_low"	$(($ring_base + 0x0))
 	print_reg "cmd_ring_addr_high"	$(($ring_base + 0x4))
@@ -169,6 +177,14 @@ dump_dma_reg() {
 dump_cmd_desc() {
 	ring_id=$1
 	ring_fifo_addr=$((0x1000 * $ring_id + 0x0 + $EIP_BASE))
+
+	# Check if CDR ring is configured; CDR base address register is 0x0 for unconfigured rings
+	cdr_base_val=$(($(devmem $ring_fifo_addr)))
+	if [ $cdr_base_val -eq 0 ]; then
+		echo "==== Command ring id: $ring_id is not configured, skipping===="
+		return
+	fi
+
 	ring_prep_ptr_addr=$((0x1000 * $ring_id + 0x34 + $EIP_BASE))
 	prep_val=$(($(devmem $ring_prep_ptr_addr) & 0xFFFFFF))
 	desc_idx=$(($prep_val / 64))
@@ -199,6 +215,14 @@ dump_cmd_desc() {
 dump_res_desc() {
 	ring_id=$1
 	ring_fifo_addr=$((0x1000 * $ring_id + 0x800 + $EIP_BASE))
+
+	# Check if RDR ring is configured; RDR base address register is 0x0 for unconfigured rings
+	rdr_base_val=$(($(devmem $ring_fifo_addr)))
+	if [ $rdr_base_val -eq 0 ]; then
+		echo "==== Result Ring id : $ring_id  is not configured, skipping===="
+		return
+	fi
+
 	ring_prep_ptr_addr=$((0x1000 * $ring_id + 0x834 + $EIP_BASE))
 	prep_val=$(($(devmem $ring_prep_ptr_addr) & 0xFFFFFF))
 	desc_idx=$(($prep_val / 64))
