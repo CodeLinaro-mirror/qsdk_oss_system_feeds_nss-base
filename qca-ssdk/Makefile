@@ -81,7 +81,9 @@ QCASSDK_CONFIG_OPTS+= TOOL_PATH=$(TOOLCHAIN_BIN_PATH) \
 		SoC=$(hal_arch) \
 		CFLAGS=-I$(STAGING_DIR)/usr/include
 
-ifneq (, $(findstring $(hal_arch), "ipq52xx"))
+ifneq (, $(findstring $(hal_arch), "ipq56xx"))
+	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=BLMPPE
+else ifneq (, $(findstring $(hal_arch), "ipq52xx"))
 	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=HMSPPE
 else ifneq (, $(findstring $(hal_arch), "ipq96xx"))
 	QCASSDK_CONFIG_OPTS+= CHIP_TYPE=JHPPE
