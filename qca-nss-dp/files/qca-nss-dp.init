@@ -60,7 +60,20 @@ enable_rps() {
 	fi
 
 	i=1
-	irq_rps=`grep edma_rxdesc /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
+	irq_rps=`grep edma_rxdesc /proc/interrupts | grep -v edma_rxdesc_gro | cut -d ':' -f 1 | tr -d ' '`
+	for entry in $irq_rps
+	do
+		printf "%x\n" "$i" > /proc/irq/$entry/smp_affinity
+		i=$(expr $i \* 2)
+		if [ $i -gt $core_threshold ];then
+			i=1
+		fi
+	done
+
+	# Assign SMP affinity for HW GRO RX rings separately, starting from
+	# CPU0, so their assignment is independent of non-GRO rxdesc rings.
+	i=1
+	irq_rps=`grep edma_rxdesc_gro /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
 	for entry in $irq_rps
 	do
 		printf "%x\n" "$i" > /proc/irq/$entry/smp_affinity
