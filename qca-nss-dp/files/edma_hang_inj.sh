@@ -18,30 +18,61 @@
 # Get board name
 board=$(cat /tmp/sysinfo/board_name)
 
-# Check the platform based on SoC type
-if [[ "$board" != *"ipq9574"* && "$board" != *"ipq5332"* && "$board" != *"ipq5424"* ]]; then
-    echo "Error: Unsupported SoC type $board. Aborting."
-    exit 1
-fi
+# Register offsets from EDMA base (constant across SoCs)
+RXFILL_BA_OFF=0x29000
+RXFILL_PROD_OFF=0x29004
+RXFILL_CONS_OFF=0x29008
+
+# EDMA base address and ring-to-ring offset multiplier vary by SoC
+case "$board" in
+	*ipq9574*|*ipq5332*)
+		edma_base=0x3AB00000
+		multiplier=0x1000
+		ring_number=4
+		RXFILL_SZ_OFF=0x2900C
+		;;
+	*ipq5424*)
+		edma_base=0x3AB00000
+		multiplier=0x1000
+		ring_number=4
+		RXFILL_SZ_OFF=0x29010
+		;;
+	*ipq9650*)
+		edma_base=0x2AD00000
+		multiplier=0x100
+		ring_number=7
+		RXFILL_SZ_OFF=0x29010
+		;;
+	*ipq5210*)
+		edma_base=0x3AD00000
+		multiplier=0x100
+		ring_number=7
+		RXFILL_SZ_OFF=0x29010
+		;;
+	*)
+		echo "Error: Unsupported SoC type $board. Aborting."
+		exit 1
+		;;
+esac
 
 rxfill_corrupt() {
 	ring_n=$1
 	echo "RXFILL Corrupt: Ring: $ring_n"
 
 	#producer index
-	rxfill_prod=$((0x3AB29004 + (0x1000*$ring_n)))
+	rxfill_prod=$(($edma_base + $RXFILL_PROD_OFF + ($multiplier*$ring_n)))
 	echo "rxfill_prod[$ring_n] addr: 0x$(printf "%x" $rxfill_prod) index: " `devmem $rxfill_prod`
 
 	#consumer index
-	rxfill_cons=$((0x3AB29008 + (0x1000*$ring_n)))
+	rxfill_cons=$(($edma_base + $RXFILL_CONS_OFF + ($multiplier*$ring_n)))
 	echo "rxfill_cons[$ring_n] addr: 0x$(printf "%x" $rxfill_cons) index: " `devmem $rxfill_cons`
 
 	#base address
-	rxfill_ba=$((0x3AB29000 + (0x1000*$ring_n)))
+	rxfill_ba=$(($edma_base + $RXFILL_BA_OFF + ($multiplier*$ring_n)))
 	echo "rxfill_ba[$ring_n] addr: 0x$(printf "%x" $rxfill_ba) index: " `devmem $rxfill_ba`
 
 	#ring size
-	rxfill_sz=$((0x3AB2900C + (0x1000*$ring_n)))
+	rxfill_sz=$(($edma_base + $RXFILL_SZ_OFF + ($multiplier*$ring_n)))
 	count=`devmem $rxfill_sz`
 	MAX=$(($count - 1))
 
@@ -71,8 +102,7 @@ rxfill_corrupt() {
 # Check if a ring number is provided
 if [ "$#" -eq 0 ]; then
     # If no ring number is provided, use the default value 4
-    ring_number=4
-    echo "No ring number provided. Using default value 4."
+    echo "No ring number provided. Using default value $ring_number."
 else
     ring_number="$1"
 fi
