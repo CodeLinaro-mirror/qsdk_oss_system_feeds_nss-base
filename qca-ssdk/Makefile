@@ -44,7 +44,7 @@ endef
 
 define KernelPackage/qca-ssdk-nohnat
 $(call KernelPackage/qca-ssdk/default-nohnat)
-  DEPENDS:= +kmod-qca-nss-phy +kmod-qca8k-cc +kmod-qca8084
+  DEPENDS:= +kmod-qca-nss-phy +kmod-qca8k-cc +kmod-qca8084 +PACKAGE_kmod-qce2k:kmod-qce2k
   VARIANT:=nohnat
 endef
 
